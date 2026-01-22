@@ -5,6 +5,7 @@ import { db } from "./config/db.js"
 import productRoutes from "./routes/productRoutes.js"
 import authRoutes from "./routes/authRoutes.js"
 import adminAuthRoutes from "./routes/adminAuthRoutes.js"
+import categoryRoutes from "./routes/categoryRoutes.js"
 
 dotenv.config()
 const app = express()
@@ -23,3 +24,7 @@ app.listen(5000, () => {
 
 app.use("/api/auth", authRoutes)
 app.use("/api/admin", adminAuthRoutes)
+app.use("/api/categories", categoryRoutes)
+
+// Test DB connection
+

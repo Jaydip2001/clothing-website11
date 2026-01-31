@@ -5,34 +5,50 @@ function AdminCategories() {
   const [categories, setCategories] = useState([])
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
+  const [image, setImage] = useState(null)      // ✅ NEW
+  const [editId, setEditId] = useState(null)
 
   useEffect(() => {
     const fetchCategories = async () => {
       const res = await axios.get("http://localhost:5000/api/categories")
       setCategories(res.data)
     }
-
     fetchCategories()
-  }, []) // ✅ ESLint satisfied
+  }, [])
 
-  const addCategory = async (e) => {
+  // ✅ ADD or UPDATE with IMAGE
+  const addOrUpdateCategory = async (e) => {
     e.preventDefault()
 
-    await axios.post("http://localhost:5000/api/categories", {
-      name,
-      description
-    })
+    const formData = new FormData()
+    formData.append("name", name)
+    formData.append("description", description)
+    if (image) formData.append("image", image)
+
+    if (editId) {
+      await axios.put(
+        `http://localhost:5000/api/categories/${editId}`,
+        formData
+      )
+      setEditId(null)
+    } else {
+      await axios.post(
+        "http://localhost:5000/api/categories",
+        formData
+      )
+    }
 
     setName("")
     setDescription("")
+    setImage(null)
 
     const res = await axios.get("http://localhost:5000/api/categories")
     setCategories(res.data)
   }
 
+  // ✅ DELETE
   const deleteCategory = async (id) => {
     await axios.delete(`http://localhost:5000/api/categories/${id}`)
-
     const res = await axios.get("http://localhost:5000/api/categories")
     setCategories(res.data)
   }
@@ -41,7 +57,7 @@ function AdminCategories() {
     <div>
       <h2>Manage Categories</h2>
 
-      <form onSubmit={addCategory}>
+      <form onSubmit={addOrUpdateCategory}>
         <input
           placeholder="Category Name"
           value={name}
@@ -55,7 +71,16 @@ function AdminCategories() {
           onChange={(e) => setDescription(e.target.value)}
         /><br /><br />
 
-        <button>Add Category</button>
+        {/* ✅ FILE INPUT (THIS WAS MISSING) */}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImage(e.target.files[0])}
+        /><br /><br />
+
+        <button>
+          {editId ? "Update Category" : "Add Category"}
+        </button>
       </form>
 
       <hr />
@@ -64,7 +89,31 @@ function AdminCategories() {
         {categories.map(cat => (
           <li key={cat.id}>
             <b>{cat.name}</b> – {cat.description}
-            <button onClick={() => deleteCategory(cat.id)}>Delete</button>
+            <br />
+
+            {/* ✅ SHOW IMAGE */}
+            {cat.image && (
+              <img
+                src={`http://localhost:5000/uploads/${cat.image}`}
+                width="80"
+                alt={cat.name}
+              />
+            )}
+
+            <br />
+
+            <button onClick={() => {
+              setEditId(cat.id)
+              setName(cat.name)
+              setDescription(cat.description)
+              setImage(null)
+            }}>
+              Edit
+            </button>
+
+            <button onClick={() => deleteCategory(cat.id)}>
+              Delete
+            </button>
           </li>
         ))}
       </ul>

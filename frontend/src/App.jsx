@@ -10,6 +10,7 @@ import AdminCategories from "./admin/AdminCategories"
 import AdminLogin from "./admin/AdminLogin"
 import AdminRegister from "./admin/AdminRegister"
 import AdminDashboard from "./admin/AdminDashboard"
+import AdminProducts from "./admin/AdminProducts"
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
       <Route path="/admin/register" element={<AdminRegister />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/admin/categories" element={<AdminCategories />} />
+      <Route path="/admin/products" element={<AdminProducts />} />
     </Routes>
   )
 }

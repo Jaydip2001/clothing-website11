@@ -8,6 +8,7 @@ import adminAuthRoutes from "./routes/adminAuthRoutes.js"
 import categoryRoutes from "./routes/categoryRoutes.js"
 
 
+
 dotenv.config()
 const app = express()
 
@@ -27,6 +28,8 @@ app.use("/api/auth", authRoutes)
 app.use("/api/admin", adminAuthRoutes)
 app.use("/api/categories", categoryRoutes)
 app.use("/uploads", express.static("uploads"))
+
+
 
 
 // Test DB connection

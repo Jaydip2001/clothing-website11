@@ -13,6 +13,7 @@ import AdminDashboard from "./admin/AdminDashboard"
 import AdminProducts from "./admin/AdminProducts"
 import AdminOrders from "./admin/AdminOrders"
 import AdminReviews from "./admin/AdminReviews"
+import AdminInventory from "./admin/AdminInventory"
 
 function App() {
   return (
@@ -32,6 +33,8 @@ function App() {
       <Route path="/admin/orders" element={<AdminOrders />} />
 
 <Route path="/admin/reviews" element={<AdminReviews />} />
+
+<Route path="/admin/inventory" element={<AdminInventory />} />
 
     </Routes>
   )

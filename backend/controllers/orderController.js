@@ -1,6 +1,9 @@
 import { db } from "../config/db.js"
+import { addInventoryLog } from "./inventoryController.js"
 
-/* GET ALL ORDERS WITH DETAILS */
+
+
+/* ================= GET ALL ORDERS WITH DETAILS ================= */
 export const getOrders = (req, res) => {
   const sql = `
     SELECT 
@@ -32,12 +35,14 @@ export const getOrders = (req, res) => {
 }
 
 
-/* GET ORDER ITEMS (products inside order) */
+
+/* ================= GET ORDER ITEMS ================= */
 export const getOrderItems = (req, res) => {
   const { id } = req.params
 
   const sql = `
     SELECT 
+      oi.product_id,
       oi.quantity,
       oi.price,
       pr.name,
@@ -54,7 +59,8 @@ export const getOrderItems = (req, res) => {
 }
 
 
-/* UPDATE ORDER STATUS */
+
+/* ================= UPDATE ORDER STATUS ================= */
 export const updateOrderStatus = (req, res) => {
   const { id } = req.params
   const { status } = req.body
@@ -64,6 +70,23 @@ export const updateOrderStatus = (req, res) => {
     [status, id],
     (err) => {
       if (err) return res.status(500).json(err)
+
+      /* 🔥 SAFE CHECK */
+      if (["paid", "delivered"].includes(status.toLowerCase())) {
+
+        db.query(
+          "SELECT product_id, quantity FROM order_items WHERE order_id=?",
+          [id],
+          (err2, items) => {
+            if (!err2 && items) {
+              items.forEach(item => {
+                addInventoryLog(item.product_id, "SALE", -item.quantity)
+              })
+            }
+          }
+        )
+      }
+
       res.json({ message: "Status updated successfully" })
     }
   )

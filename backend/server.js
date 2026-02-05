@@ -8,6 +8,7 @@ import adminAuthRoutes from "./routes/adminAuthRoutes.js"
 import categoryRoutes from "./routes/categoryRoutes.js"
 import orderRoutes from "./routes/orderRoutes.js"
 import reviewRoutes from "./routes/reviewRoutes.js"
+import inventoryRoutes from "./routes/inventoryRoutes.js"
 
 
 
@@ -35,6 +36,8 @@ app.use("/api/orders", orderRoutes)
 
 app.use("/api/reviews", reviewRoutes)
 
+
+app.use("/api/inventory", inventoryRoutes)
 
 
 

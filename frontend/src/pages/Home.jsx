@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { Link } from "react-router-dom"
@@ -18,10 +19,14 @@ function Home() {
     fetchData()
   }, [])
 
+=======
+function Home() {
+>>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
   return (
     <div>
       <h1>Welcome to Clothing Store</h1>
       <p>Shop the latest fashion with us</p>
+<<<<<<< HEAD
 
       {/* ================= CATEGORIES ================= */}
       <h2>Categories</h2>
@@ -91,6 +96,8 @@ function Home() {
           </div>
         ))}
       </div>
+=======
+>>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
     </div>
   )
 }

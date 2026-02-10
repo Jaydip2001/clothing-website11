@@ -9,7 +9,10 @@ import categoryRoutes from "./routes/categoryRoutes.js"
 import orderRoutes from "./routes/orderRoutes.js"
 import reviewRoutes from "./routes/reviewRoutes.js"
 import inventoryRoutes from "./routes/inventoryRoutes.js"
+<<<<<<< HEAD
 import dashboardRoutes from "./routes/dashboardRoutes.js"
+=======
+>>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
 
 
 
@@ -41,8 +44,11 @@ app.use("/api/reviews", reviewRoutes)
 app.use("/api/inventory", inventoryRoutes)
 
 
+<<<<<<< HEAD
 app.use("/api/dashboard", dashboardRoutes)
 
+=======
+>>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
 
 
 // Test DB connection

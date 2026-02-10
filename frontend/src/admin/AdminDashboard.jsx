@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { Link, useNavigate } from "react-router-dom"
@@ -82,6 +83,20 @@ function AdminDashboard() {
       <Link to="/admin/orders">Orders</Link> |{" "}
       <Link to="/admin/reviews">Reviews</Link> |{" "}
       <Link to="/admin/inventory">Inventory</Link>
+=======
+function AdminDashboard() {
+  return (
+    <div>
+      <h1>Admin Dashboard</h1>
+      <p>Welcome Admin 👋</p>
+
+      <ul>
+        <li>Manage Categories</li>
+        <li>Manage Products</li>
+        <li>View Orders</li>
+        <li>View Payments</li>
+      </ul>
+>>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
     </div>
   )
 }

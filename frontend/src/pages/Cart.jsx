@@ -1,68 +1,121 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
-import { useNavigate } from "react-router-dom"
 
 function Cart() {
   const [cartItems, setCartItems] = useState([])
-  const navigate = useNavigate()
-
   const user = JSON.parse(localStorage.getItem("user"))
 
   /* ================= LOAD CART ================= */
   useEffect(() => {
-    const loadCart = async () => {
-      // 🔐 LOGGED-IN USER → DATABASE CART
-      if (user) {
-        try {
-          const res = await axios.get(
-            `http://localhost:5000/api/cart/${user.id}`
-          )
-          setCartItems(res.data)
-        } catch (err) {
-          console.error(err)
-          alert("Failed to load cart")
-        }
-      }
-      // 👤 GUEST USER → LOCAL STORAGE CART
-      else {
-        const localCart =
-          JSON.parse(localStorage.getItem("cart")) || []
-        setCartItems(localCart)
-      }
+    if (!user) {
+      loadGuestCart()
+    } else {
+      loadUserCart()
+    }
+  }, [])
+
+  /* ================= GUEST CART ================= */
+  const loadGuestCart = async () => {
+    const guestCart =
+      JSON.parse(localStorage.getItem("guestCart")) || []
+
+    if (guestCart.length === 0) {
+      setCartItems([])
+      return
     }
 
-    loadCart()
-  }, [user])
+    const res = await axios.get("http://localhost:5000/api/products")
+
+    const fullItems = guestCart.map((item) => {
+      const product = res.data.find(
+        (p) => p.id === item.product_id
+      )
+
+      return {
+        ...product,
+        quantity: item.quantity,
+        product_id: item.product_id
+      }
+    })
+
+    setCartItems(fullItems)
+  }
+
+  /* ================= USER CART ================= */
+  const loadUserCart = async () => {
+    const res = await axios.get(
+      `http://localhost:5000/api/cart/${user.id}`
+    )
+    setCartItems(res.data)
+  }
 
   /* ================= REMOVE ITEM ================= */
-  const removeItem = async (product_id) => {
-    // LOGGED-IN USER
-    if (user) {
-      await axios.delete(
-        `http://localhost:5000/api/cart/remove`,
-        {
-          data: {
-            user_id: user.id,
-            product_id
-          }
-        }
+  const removeItem = async (item) => {
+    // GUEST
+    if (!user) {
+      let guestCart =
+        JSON.parse(localStorage.getItem("guestCart")) || []
+
+      guestCart = guestCart.filter(
+        (i) => i.product_id !== item.product_id
       )
 
-      const res = await axios.get(
-        `http://localhost:5000/api/cart/${user.id}`
+      localStorage.setItem(
+        "guestCart",
+        JSON.stringify(guestCart)
       )
-      setCartItems(res.data)
+      loadGuestCart()
+      return
     }
-    // GUEST USER
-    else {
-      let cart =
-        JSON.parse(localStorage.getItem("cart")) || []
 
-      cart = cart.filter(item => item.product_id !== product_id)
+    // USER
+    await axios.delete(
+      `http://localhost:5000/api/cart/remove/${item.id}`
+    )
+    loadUserCart()
+  }
 
-      localStorage.setItem("cart", JSON.stringify(cart))
-      setCartItems(cart)
+  /* ================= UPDATE QUANTITY ================= */
+  const updateQty = async (item, change) => {
+    // GUEST
+    if (!user) {
+      let guestCart =
+        JSON.parse(localStorage.getItem("guestCart")) || []
+
+      const found = guestCart.find(
+        (i) => i.product_id === item.product_id
+      )
+
+      if (!found) return
+
+      found.quantity += change
+      if (found.quantity < 1) {
+        guestCart = guestCart.filter(
+          (i) => i.product_id !== item.product_id
+        )
+      }
+
+      localStorage.setItem(
+        "guestCart",
+        JSON.stringify(guestCart)
+      )
+      loadGuestCart()
+      return
     }
+
+    // USER
+    const newQty = item.quantity + change
+    if (newQty < 1) {
+      removeItem(item)
+      return
+    }
+
+    await axios.put("http://localhost:5000/api/cart/update", {
+      cart_id: item.id,
+      quantity: newQty
+    })
+
+    loadUserCart()
   }
 
   /* ================= TOTAL ================= */
@@ -71,7 +124,6 @@ function Cart() {
     0
   )
 
-  /* ================= UI ================= */
   return (
     <div>
       <h1>Your Cart</h1>
@@ -80,34 +132,43 @@ function Cart() {
         <p>Your cart is empty</p>
       ) : (
         <>
-          {cartItems.map((item, index) => (
+          {cartItems.map((item) => (
             <div
-              key={index}
+              key={item.id || item.product_id}
               style={{
-                display: "flex",
-                gap: "15px",
                 border: "1px solid #ccc",
                 padding: "10px",
-                marginBottom: "10px"
+                marginBottom: "10px",
+                display: "flex",
+                gap: "15px"
               }}
             >
-              {item.image && (
-                <img
-                  src={`http://localhost:5000/uploads/${item.image}`}
-                  width="80"
-                  alt=""
-                />
-              )}
+              <img
+                src={`http://localhost:5000/uploads/${item.image}`}
+                width="80"
+              />
 
               <div>
                 <h3>{item.name}</h3>
                 <p>₹{item.price}</p>
-                <p>Qty: {item.quantity}</p>
-                <p>Total: ₹{item.price * item.quantity}</p>
 
-                <button
-                  onClick={() => removeItem(item.product_id)}
-                >
+                <div>
+                  <button onClick={() => updateQty(item, -1)}>
+                    -
+                  </button>
+                  <span style={{ margin: "0 10px" }}>
+                    {item.quantity}
+                  </span>
+                  <button onClick={() => updateQty(item, 1)}>
+                    +
+                  </button>
+                </div>
+
+                <p>
+                  Total: ₹{item.price * item.quantity}
+                </p>
+
+                <button onClick={() => removeItem(item)}>
                   Remove
                 </button>
               </div>
@@ -116,15 +177,9 @@ function Cart() {
 
           <h2>Grand Total: ₹{total}</h2>
 
-          <button onClick={() => alert("Checkout coming next 🚀")}>
+          <button onClick={() => alert("Checkout next 🚀")}>
             Checkout
           </button>
-
-          {!user && (
-            <p style={{ marginTop: "10px" }}>
-              Login during checkout to save your order
-            </p>
-          )}
         </>
       )}
     </div>

@@ -5,8 +5,12 @@ import { Link, useNavigate } from "react-router-dom"
 function Home() {
   const [categories, setCategories] = useState([])
   const [products, setProducts] = useState([])
-  const navigate = useNavigate()
+  const [cartCount, setCartCount] = useState(0)
 
+  const navigate = useNavigate()
+  const user = JSON.parse(localStorage.getItem("user"))
+
+  /* ================= FETCH DATA ================= */
   useEffect(() => {
     const fetchData = async () => {
       const catRes = await axios.get("http://localhost:5000/api/categories")
@@ -19,62 +23,93 @@ function Home() {
     fetchData()
   }, [])
 
+  /* ================= LOAD CART COUNT ================= */
+  useEffect(() => {
+    const loadCartCount = async () => {
+      // 🔹 Logged-in user → DB
+      if (user) {
+        const res = await axios.get(
+          `http://localhost:5000/api/cart/${user.id}`
+        )
+        setCartCount(res.data.length)
+      }
+      // 🔹 Guest → localStorage
+      else {
+        const guestCart =
+          JSON.parse(localStorage.getItem("guestCart")) || []
+        setCartCount(guestCart.length)
+      }
+    }
+
+    loadCartCount()
+  }, [user])
+
   /* ================= ADD TO CART ================= */
   const addToCart = async (product) => {
-    const user = JSON.parse(localStorage.getItem("user"))
+    // 🔹 Guest
+    if (!user) {
+      const guestCart =
+        JSON.parse(localStorage.getItem("guestCart")) || []
 
-    // LOGGED-IN USER → DB CART
-    if (user) {
-      await axios.post("http://localhost:5000/api/cart/add", {
-        user_id: user.id,
-        product_id: product.id,
-        quantity: 1
-      })
-      alert("Added to cart")
+      const existing = guestCart.find(
+        (item) => item.product_id === product.id
+      )
+
+      if (existing) {
+        existing.quantity += 1
+      } else {
+        guestCart.push({ product_id: product.id, quantity: 1 })
+      }
+
+      localStorage.setItem("guestCart", JSON.stringify(guestCart))
+      setCartCount(guestCart.length)
+      alert("Added to cart (guest)")
       return
     }
 
-    // GUEST USER → LOCAL STORAGE CART
-    let cart = JSON.parse(localStorage.getItem("cart")) || []
+    // 🔹 Logged-in user
+    await axios.post("http://localhost:5000/api/cart/add", {
+      user_id: user.id,
+      product_id: product.id,
+      quantity: 1
+    })
 
-    const existing = cart.find(item => item.product_id === product.id)
-
-    if (existing) {
-      existing.quantity += 1
-    } else {
-      cart.push({
-        product_id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        quantity: 1
-      })
-    }
-
-    localStorage.setItem("cart", JSON.stringify(cart))
+    setCartCount((prev) => prev + 1)
     alert("Added to cart")
-  }
-
-  /* ================= BUY NOW ================= */
-  const buyNow = (product) => {
-    addToCart(product)
-    navigate("/cart")
-  }
-
-  /* ================= WISHLIST (LATER) ================= */
-  const addToWishlist = (product) => {
-    alert(`Wishlist coming later ❤️ (${product.name})`)
   }
 
   return (
     <div>
-      <h1>Welcome to Clothing Store</h1>
-      <p>Shop the latest fashion with us</p>
+      {/* ================= HEADER ================= */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}
+      >
+        <div>
+          <h1>Welcome to Clothing Store</h1>
+          <p>Shop the latest fashion with us</p>
+        </div>
+
+        {/* 🛒 CART BUTTON */}
+        <button
+          onClick={() => navigate("/cart")}
+          style={{
+            padding: "8px 15px",
+            fontSize: "16px",
+            cursor: "pointer"
+          }}
+        >
+          🛒 Cart ({cartCount})
+        </button>
+      </div>
 
       {/* ================= CATEGORIES ================= */}
       <h2>Categories</h2>
       <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
-        {categories.map(cat => (
+        {categories.map((cat) => (
           <Link
             key={cat.id}
             to={`/products?category=${cat.id}`}
@@ -109,7 +144,7 @@ function Home() {
       <h2>All Products</h2>
 
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-        {products.map(p => (
+        {products.map((p) => (
           <div
             key={p.id}
             style={{
@@ -134,16 +169,14 @@ function Home() {
             <button onClick={() => addToCart(p)}>
               Add to Cart
             </button>
-
             <br /><br />
 
-            <button onClick={() => buyNow(p)}>
+            <button onClick={() => alert("Checkout coming next 🚀")}>
               Buy Now
             </button>
-
             <br /><br />
 
-            <button onClick={() => addToWishlist(p)}>
+            <button onClick={() => alert("Wishlist coming later ❤️")}>
               ❤️ Wishlist
             </button>
           </div>

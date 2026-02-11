@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 
 function Products() {
   const [products, setProducts] = useState([])
   const location = useLocation()
-  const navigate = useNavigate()
 
   const query = new URLSearchParams(location.search)
   const categoryId = query.get("category")
@@ -24,57 +23,46 @@ function Products() {
     fetchProducts()
   }, [categoryId])
 
-  /* ================= ADD TO CART (GUEST + USER) ================= */
-  const addToCart = (product) => {
+  /* ================= ADD TO CART ================= */
+  const addToCart = async (product) => {
     const user = JSON.parse(localStorage.getItem("user"))
 
-    // 🧑 LOGGED-IN USER → DB CART (later sync)
-    if (user) {
-      axios.post("http://localhost:5000/api/cart/add", {
-        user_id: user.id,
-        product_id: product.id,
-        quantity: 1
-      })
-      alert("Added to cart")
+    // 🔹 GUEST USER
+    if (!user) {
+      const guestCart =
+        JSON.parse(localStorage.getItem("guestCart")) || []
+
+      const existing = guestCart.find(
+        (item) => item.product_id === product.id
+      )
+
+      if (existing) {
+        existing.quantity += 1
+      } else {
+        guestCart.push({
+          product_id: product.id,
+          quantity: 1
+        })
+      }
+
+      localStorage.setItem("guestCart", JSON.stringify(guestCart))
+      alert("Added to cart (guest)")
       return
     }
 
-    // 👤 GUEST USER → LOCAL STORAGE CART
-    let cart = JSON.parse(localStorage.getItem("cart")) || []
+    // 🔹 LOGGED-IN USER
+    await axios.post("http://localhost:5000/api/cart/add", {
+      user_id: user.id,
+      product_id: product.id,
+      quantity: 1
+    })
 
-    const existing = cart.find(item => item.product_id === product.id)
-
-    if (existing) {
-      existing.quantity += 1
-    } else {
-      cart.push({
-        product_id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        quantity: 1
-      })
-    }
-
-    localStorage.setItem("cart", JSON.stringify(cart))
     alert("Added to cart")
   }
 
-  /* ================= BUY NOW ================= */
-  const buyNow = (product) => {
-    addToCart(product)
-    navigate("/cart")
-  }
-
-  /* ================= WISHLIST (LATER) ================= */
-  const addToWishlist = (product) => {
-    alert(`Wishlist coming later ❤️ (${product.name})`)
-  }
-
-  /* ================= UI ================= */
   return (
     <div>
-      <h1>All Products</h1>
+      <h1>Products</h1>
 
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
         {products.map((p) => (
@@ -101,18 +89,6 @@ function Products() {
 
             <button onClick={() => addToCart(p)}>
               Add to Cart
-            </button>
-
-            <br /><br />
-
-            <button onClick={() => buyNow(p)}>
-              Buy Now
-            </button>
-
-            <br /><br />
-
-            <button onClick={() => addToWishlist(p)}>
-              ❤️ Wishlist
             </button>
           </div>
         ))}
